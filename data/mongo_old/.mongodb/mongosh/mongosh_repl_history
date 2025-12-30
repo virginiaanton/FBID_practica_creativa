@@ -1,0 +1,87 @@
+db.flight_delay_ml_response.find()
+ç
+show collectionsexitexit
+clear
+db.flight_delay_ml_response.find()
+use agile_data_science
+exit
+db.flight_delay_ml_response.find()
+show collections
+db.flight_delay_ml_response.find()
+db.flight_delay_ml_response.find({Carrier:'DD'})
+db.flight_delay_ml_response.find({Carrier:'DD'}))
+db.flight_delay_ml_response.find()
+use agile_data_science
+exit
+db.flight_delay_ml_response.find()
+db.flight_delay-ml_response.find()
+show collections
+use agile_data_science
+exit
+db.flight_delay_ml_response.find()
+use agile_data_science
+exit
+db.flight_delay_ml_response.find()
+use agile_data_science
+db.flight_delay_ml_response.find()
+show collections
+use agile_data_science
+exit
+db.flight_delay_ml_response.find().pretty()
+show collections
+use agile_data_science
+exit
+db.flight_delay_ml_response.find().pretty()
+db
+use agile_data_science
+db.flight_delay_ml_response.find()
+use flight_delay_ml_response
+show collections
+use agile_data_science
+show dbs
+exit
+db.flight_delay_ml_response.find()
+use use agile_data_science
+exit
+show collections
+use agile_data_science
+show dbs
+exit
+show collections
+use agile_data_science
+show dbs
+exit
+show collections
+use agile_data_science
+show dbs
+show collections
+use agile_data_science
+db.origin_dest_distances.find()
+show collections
+use agile_data_science
+db.find()
+use origin_dest_distances
+origin_dest_distances.find()
+show collections
+db.find()
+show collections
+use agile_data_science
+show dbs
+show collections
+exit
+flight_delay_ml_response.find()
+db.find()
+use origin_dest_distances
+show collections
+use agile_data_science
+show dbs
+exit
+db.flight_delay_ml_response.find()
+show collections
+db.flight_delay_ml_response.find()
+use agile_data_science
+show dbs
+use agile_data_science
+db.origin_dest_distances.findOne()
+db.origin_dest_distances.countDocuments()
+use agile_data_science
