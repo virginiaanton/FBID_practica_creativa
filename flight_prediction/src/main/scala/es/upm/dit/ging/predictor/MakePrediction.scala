@@ -2,7 +2,7 @@ package es.upm.dit.ging.predictor
 import com.mongodb.spark._
 import org.apache.spark.ml.classification.RandomForestClassificationModel
 import org.apache.spark.ml.feature.{Bucketizer, StringIndexerModel, VectorAssembler}
-import org.apache.spark.sql.functions.{concat, from_json, lit}
+import org.apache.spark.sql.functions.{concat, from_json, lit, to_json, struct, col}
 import org.apache.spark.sql.types.{DataTypes, StructType}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -19,7 +19,7 @@ object MakePrediction {
     import spark.implicits._
 
     //Load the arrival delay bucketizer
-    val base_path= "/Users/admin/Downloads/practica_creativa"
+    val base_path= "/home/ibdn/practica_creativa"
     val arrivalBucketizerPath = "%s/models/arrival_bucketizer_2.0.bin".format(base_path)
     print(arrivalBucketizerPath.toString())
     val arrivalBucketizer = Bucketizer.load(arrivalBucketizerPath)
@@ -51,7 +51,7 @@ object MakePrediction {
 
     val flightJsonDf = df.selectExpr("CAST(value AS STRING)")
 
-    val struct = new StructType()
+    val structure = new StructType()
       .add("Origin", DataTypes.StringType)
       .add("FlightNum", DataTypes.StringType)
       .add("DayOfWeek", DataTypes.IntegerType)
@@ -70,7 +70,7 @@ object MakePrediction {
       .add("Dest_index", DataTypes.DoubleType)
       .add("Route_index", DataTypes.DoubleType)
 
-    val flightNestedDf = flightJsonDf.select(from_json($"value", struct).as("flight"))
+    val flightNestedDf = flightJsonDf.select(from_json($"value", structure).as("flight"))
     flightNestedDf.printSchema()
 
     // DataFrame for Vectorizing string fields with the corresponding pipeline for that column
@@ -136,7 +136,6 @@ object MakePrediction {
     // Inspect the output
     finalPredictions.printSchema()
 
-    // define a streaming query
     val dataStreamWriter = finalPredictions
       .writeStream
       .format("mongodb")
@@ -149,11 +148,10 @@ object MakePrediction {
     // run the query
     val query = dataStreamWriter.start()
     // Console Output for predictions
-
     val consoleOutput = finalPredictions.writeStream
       .outputMode("append")
       .format("console")
-      .start()
+      .start() 
     consoleOutput.awaitTermination()
   }
 

@@ -12,7 +12,8 @@ import predict_utils
 # Set up Flask, Mongo and Elasticsearch
 app = Flask(__name__)
 
-client = MongoClient()
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+client = MongoClient(MONGO_URI)
 
 from pyelasticsearch import ElasticSearch
 elastic = ElasticSearch(config.ELASTIC_URL)
@@ -24,10 +25,11 @@ import iso8601
 import datetime
 
 # Setup Kafka
-from kafka import KafkaProducer
-producer = KafkaProducer(bootstrap_servers=['localhost:9092'],api_version=(0,10))
+from kafka import KafkaProducer, KafkaConsumer
+KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP", "localhost:9092")
+producer = KafkaProducer(bootstrap_servers=[KAFKA_BOOTSTRAP], api_version=(0, 10))
 PREDICTION_TOPIC = 'flight-delay-ml-request'
-
+PREDICTION_RESPONSE_TOPIC = 'flight-delay-ml-predictions'
 import uuid
 
 # Chapter 5 controller: Fetch a flight and display it
@@ -491,9 +493,32 @@ def classify_flight_delays_realtime():
   
   message_bytes = json.dumps(prediction_features).encode()
   producer.send(PREDICTION_TOPIC, message_bytes)
+ 
 
   response = {"status": "OK", "id": unique_id}
   return json_util.dumps(response)
+
+def fetch_prediction_from_kafka(unique_id):
+  # Start from the earliest offset so we don't miss a message that arrived
+  # between polling attempts.
+  consumer = KafkaConsumer(
+    PREDICTION_RESPONSE_TOPIC,
+    bootstrap_servers=[KAFKA_BOOTSTRAP],
+    auto_offset_reset='earliest',
+    enable_auto_commit=False,
+    consumer_timeout_ms=10000,
+    value_deserializer=lambda m: json.loads(m.decode('utf-8')),
+    api_version=(0, 10)
+  )
+
+  try:
+    for message in consumer:
+      payload = message.value
+      if payload and payload.get("UUID") == unique_id:
+        return payload
+  finally:
+    consumer.close()
+  return None 
 
 @app.route("/flights/delays/predict_kafka")
 def flight_delays_page_kafka():
@@ -511,13 +536,18 @@ def flight_delays_page_kafka():
 
 @app.route("/flights/delays/predict/classify_realtime/response/<unique_id>")
 def classify_flight_delays_realtime_response(unique_id):
-  """Serves predictions to polling requestors"""
+  """Serves predictions to polling requestors from Kafka"""
   
+  # First, check Mongo where the Spark job also writes results
   prediction = client.agile_data_science.flight_delay_ml_response.find_one(
     {
       "UUID": unique_id
     }
   )
+
+  # If not found yet in Mongo, fetch prediction from Kafka response topic
+  if not prediction:
+    prediction = fetch_prediction_from_kafka(unique_id)
   
   response = {"status": "WAIT", "id": unique_id}
   if prediction:

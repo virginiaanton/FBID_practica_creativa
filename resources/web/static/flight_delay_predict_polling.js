@@ -41,13 +41,14 @@ function poll(id) {
   {
     url: predictionUrl,
     type: "GET",
-    complete: conditionalPoll
+    success: handlePollSuccess,
+    error: handlePollError
   });
 }
 
 // Decide whether to poll based on the response status
-function conditionalPoll(data) {
-  var response = JSON.parse(data.responseText);
+function handlePollSuccess(data) {
+  var response = (typeof data === "string") ? JSON.parse(data) : data;
 
   if(response.status == "OK") {
     renderPage(response.prediction);
@@ -57,6 +58,10 @@ function conditionalPoll(data) {
   }
 }
 
+function handlePollError(jqXHR, textStatus) {
+  $( "#result" ).empty().append( "Error consultando la predicción: " + textStatus );
+}
+
 // Render the response on the page for splits:
 // [-float("inf"), -15.0, 0, 30.0, float("inf")]
 function renderPage(response) {
@@ -64,17 +69,23 @@ function renderPage(response) {
   console.log(response);
 
   var displayMessage;
+  // Accept both "Prediction" and "prediction" keys and normalize to string for comparison
+  var predictionValue = response.Prediction;
+  if (predictionValue === undefined || predictionValue === null) {
+    predictionValue = response.prediction;
+  }
+  predictionValue = predictionValue !== undefined && predictionValue !== null ? predictionValue.toString() : "";
 
-if(response.Prediction == 0 || response.Prediction == '0') {
+if(predictionValue === '0') {
     displayMessage = "Early (15+ Minutes Early)";
   }
-  else if(response.Prediction == 1 || response.Prediction == '1') {
+  else if(predictionValue === '1') {
     displayMessage = "Slightly Early (0-15 Minute Early)";
   }
-  else if(response.Prediction == 2 || response.Prediction == '2') {
+  else if(predictionValue === '2') {
     displayMessage = "Slightly Late (0-30 Minute Delay)";
   }
-  else if(response.Prediction == 3 || response.Prediction == '3') {
+  else if(predictionValue === '3') {
     displayMessage = "Very Late (30+ Minutes Late)";
   }
   
