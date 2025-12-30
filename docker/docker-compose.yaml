@@ -1,0 +1,61 @@
+services:
+  mongo:
+    image: mongo:7.0.17
+    container_name: mongo-flights-2
+    ports: ["27017:27017"]
+    volumes:
+      - /home/ibdn/practica_creativa/data/mongo:/data/db
+
+  kafka:
+    build:
+      context: ../
+      dockerfile: docker/kafka.Dockerfile
+    container_name: kafka
+    ports: ["9092:9092"]
+    environment:
+     KAFKA_CLUSTER_ID: 9TB_p1JOTMuzTbtikgyM2g
+     KAFKA_NODE_ID: 1
+     KAFKA_PROCESS_ROLES: broker,controller
+     KAFKA_LISTENERS: PLAINTEXT://kafka:9092,CONTROLLER://kafka:9093
+     KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+     KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+     KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+     KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+     KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+     KAFKA_LOG_DIRS: /var/lib/kafka/data
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+
+
+  spark:
+    build:
+      context: ..
+      dockerfile: docker/spark.Dockerfile
+    container_name: spark
+    depends_on:
+      - mongo
+      - kafka
+    environment:
+      - MONGO_URI=mongodb://mongo:27017
+      - KAFKA_BOOTSTRAP=kafka:9092
+    volumes:
+    - ../models:/app/models
+
+  flask:
+    build:
+      context: ../
+      dockerfile: docker/flask.Dockerfile
+    container_name: flask-app
+    depends_on:
+      - mongo
+      - kafka 
+      - spark
+    ports:
+      - "5001:5001"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017
+      - KAFKA_BOOTSTRAP=kafka:9092
+
+volumes:
+  mongo_data:
+  kafka_data:
