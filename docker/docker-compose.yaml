@@ -1,10 +1,18 @@
 services:
   mongo:
-    image: mongo:7.0.17
-    container_name: mongo-flights-2
+    build:
+      context: ../
+      dockerfile: docker/mongo.Dockerfile
+    container_name: mongo-flights
     ports: ["27017:27017"]
     volumes:
-      - /home/ibdn/practica_creativa/data/mongo:/data/db
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   kafka:
     build:
@@ -25,6 +33,12 @@ services:
      KAFKA_LOG_DIRS: /var/lib/kafka/data
     volumes:
       - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
 
 
   spark:
@@ -48,7 +62,7 @@ services:
     container_name: flask-app
     depends_on:
       - mongo
-      - kafka 
+      - kafka
       - spark
     ports:
       - "5001:5001"
