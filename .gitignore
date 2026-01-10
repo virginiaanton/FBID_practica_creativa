@@ -15,6 +15,9 @@ ch06/web/static
 tmp
 .idea
 kafka
+kubernetes
+kubectl
+kubectl.sha256
 zeppelin
 ch05/scrape_faa.py
 models
@@ -33,4 +36,4 @@ deep
 data/origin_dest_distances.jsonl
 data/simple_flight_delay_features.jsonl.bz2
 /data/mongo/
-
+google-cloud-cli-linux-x86_64.tar.gz
